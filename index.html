@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Barber Coach — Prototype</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app">
+      <h1>Barber Coach (Prototype)</h1>
+      <section id="preset">
+        <h2>Selected Preset</h2>
+        <div id="preset-name">Quick Cut — 20m</div>
+        <ul id="checkpoints"></ul>
+      </section>
+
+      <section id="presets-list">
+        <h2>Presets</h2>
+        <div id="preset-actions">
+          <button id="new-preset">New Preset</button>
+          <button id="edit-preset">Edit Preset</button>
+        </div>
+        <ul id="presets"></ul>
+      </section>
+      <div id="preset-actions">
+        <button id="edit-preset">Edit Preset</button>
+      </div>
+
+      <section id="settings">
+        <h2>Alert Channels</h2>
+        <div class="settings-row">
+          <button class="alert-btn" data-key="audio" id="btn-audio">Headphones (sound)</button>
+          <button class="alert-btn" data-key="notification" id="btn-notify">Phone (notification)</button>
+          <button class="alert-btn" data-key="vibration" id="btn-vibe">Vibration</button>
+          <button class="alert-btn" data-key="visual" id="btn-visual">Visual</button>
+        </div>
+        <div class="settings-row">
+          <label style="display:flex;align-items:center;gap:.5rem">Volume
+            <input id="volume-slider" type="range" min="0" max="100" value="50">
+          </label>
+        </div>
+      </section>
+
+      <!-- Floating volume meter on the right side -->
+      <div id="volume-panel" aria-hidden="true">
+        <div id="volume-meter"><div class="level" style="height:10%"></div></div>
+      </div>
+      </section>
+
+      <section id="preset-editor" class="hidden">
+        <h2>Edit Preset</h2>
+        <label>Preset name<br><input id="editor-name" type="text"></label>
+        <label>Total minutes<br><input id="editor-total-min" type="number" min="1" value="20"></label>
+
+        <h3>Checkpoints</h3>
+        <ul id="editor-checkpoints"></ul>
+
+        <div id="add-checkpoint">
+          <input id="new-label" placeholder="Label">
+          <input id="new-min" type="number" min="0" placeholder="min" style="width:4rem">
+          <input id="new-sec" type="number" min="0" max="59" placeholder="sec" style="width:4rem">
+          <button id="add-cp">Add</button>
+        </div>
+
+        <div class="editor-actions">
+          <button id="save-preset">Save Preset</button>
+          <button id="cancel-preset">Cancel</button>
+        </div>
+      </section>
+
+      <section id="controls">
+        <button id="start">Start Session</button>
+        <button id="stop" disabled>Stop</button>
+        <button id="test-alert">Test Alert</button>
+      </section>
+
+      <section id="session">
+        <div id="timer">00:00</div>
+        <div id="next">Next: —</div>
+      </section>
+
+      <section id="notes">
+        <h3>Notes / Log</h3>
+        <div class="log-actions"><button id="clear-log">Clear Log</button></div>
+        <ul id="log"></ul>
+      </section>
+
+      <footer>
+        <small>Prototype: offline PWA with discrete alerts (audio, vibration, visual)</small>
+      </footer>
+    </main>
+
+    <script type="module" src="src/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,38 @@
+:root{font-family: system-ui, -apple-system, Roboto, 'Segoe UI', Arial; color:#222}
+body{margin:0;padding:1rem;background:#fff}
+.app{max-width:520px;margin:0 auto}
+h1{font-size:1.25rem}
+#timer{font-size:2rem;font-weight:600;margin:0.5rem 0}
+#next.pulse{transition:transform .12s ease; transform:scale(1.03)}
+#controls button{margin-right:.5rem;padding:.6rem 1rem}
+#log{list-style:none;padding:0;margin:0}
+#log li{font-size:.9rem;padding:.25rem 0;border-bottom:1px solid #eee}
+footer{margin-top:1.5rem;color:#666}
+
+.hidden{display:none}
+#preset-editor{background:#fafafa;border:1px solid #eee;padding:0.75rem;margin-top:0.5rem}
+#preset-editor input{margin:.25rem 0;padding:.35rem}
+#editor-checkpoints li{display:flex;gap:.5rem;align-items:center;padding:.25rem 0}
+#editor-checkpoints .cp-left{flex:1}
+#editor-checkpoints .cp-controls{display:flex;gap:.25rem}
+#editor-checkpoints .cp-controls button{min-width:36px;padding:.25rem}
+.editor-actions{margin-top:.5rem}
+
+.log-actions{margin-bottom:.5rem}
+.log-actions button{padding:.4rem .6rem}
+
+#presets{list-style:none;padding:0;margin:0}
+#presets li{display:flex;align-items:center;gap:.5rem;padding:.3rem 0;border-bottom:1px solid #eee}
+#presets li button{margin-left:auto}
+#preset-actions{margin-bottom:.5rem}
+
+#settings{margin-top:1rem}
+.settings-row{display:flex;gap:.5rem;flex-wrap:wrap}
+.alert-btn{padding:.5rem .6rem;border:1px solid #ccc;background:#fff;border-radius:6px}
+.alert-btn.active{background:#222;color:#fff;border-color:#222}
+
+#volume-panel{position:fixed;right:12px;top:90px;width:44px;height:140px;background:transparent;display:flex;align-items:center;justify-content:center}
+#volume-meter{width:16px;height:120px;background:#eee;border-radius:8px;overflow:hidden;border:1px solid #ddd;display:flex;align-items:flex-end}
+#volume-meter .level{width:100%;background:linear-gradient(180deg,#4caf50,#2e7d32);height:10%}
+#volume-slider{width:160px}
+
