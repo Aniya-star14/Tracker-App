@@ -117,6 +117,15 @@ async function triggerAlert(cp){
   const useVibration = (typeof ch.vibration === 'boolean') ? ch.vibration : settings.vibration;
   const useVisual = (typeof ch.visual === 'boolean') ? ch.visual : settings.visual;
 
+  // Try to resume audio context if it's suspended (may fail without user gesture)
+  try{
+    if (audioCtx && audioCtx.state === 'suspended'){
+      await audioCtx.resume();
+    }
+  }catch(e){
+    console.warn('Audio resume blocked or failed', e);
+  }
+
   // Visual
   if (useVisual){
     const next = $('next'); next.textContent = `Next: ${cp.label}`;
@@ -131,18 +140,22 @@ async function triggerAlert(cp){
   if (useAudio){
     try{
       initAudio();
-      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-      const o = audioCtx.createOscillator();
-      const lg = audioCtx.createGain();
-      o.type = 'sine'; o.frequency.value = 880;
-      // envelope
-      const now = audioCtx.currentTime;
-      lg.gain.setValueAtTime(1, now);
-      lg.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-      o.connect(lg); lg.connect(masterGain);
-      o.start();
-      setTimeout(()=>{ try{ o.stop(); o.disconnect(); lg.disconnect(); }catch(e){} },140);
-    }catch(e){/* ignore */}
+      // Only play if audio context is running; resume above may fail if not a user gesture.
+      if (audioCtx && audioCtx.state !== 'suspended'){
+        const o = audioCtx.createOscillator();
+        const lg = audioCtx.createGain();
+        o.type = 'sine'; o.frequency.value = 880;
+        // envelope
+        const now = audioCtx.currentTime;
+        lg.gain.setValueAtTime(1, now);
+        lg.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        o.connect(lg); lg.connect(masterGain);
+        o.start();
+        setTimeout(()=>{ try{ o.stop(); o.disconnect(); lg.disconnect(); }catch(e){} },140);
+      } else {
+        console.debug('AudioContext suspended; skipping audio alert');
+      }
+    }catch(e){ console.warn('Audio alert failed', e); }
   }
 
   // Notification
