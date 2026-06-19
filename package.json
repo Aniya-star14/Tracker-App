@@ -6,7 +6,8 @@
   "scripts": {
     "start": "serve -s .",
     "build": "echo \"No build step configured (static site)\"",
-    "cap:init": "npx @capacitor/cli create"
+    "cap:init": "npx @capacitor/cli create",
+    "deploy": "gh-pages -d ."
   },
   "keywords": ["pwa","barber","timer","coach"],
   "author": "",
