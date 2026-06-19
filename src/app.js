@@ -91,7 +91,7 @@ function setCurrentPreset(p){
 }
 
 async function renderPresets(){
-  const ul = document.getElementById('presets'); ul.innerHTML='';
+  const ul = $('presets'); ul.innerHTML='';
   try{
     const presets = await db.getPresets();
     presets.forEach(p=>{
@@ -201,10 +201,10 @@ function stopSession(){
   clearInterval(window._sessionTimer);
   $('start').disabled = false; $('stop').disabled = true;
   // reset control buttons
-  document.getElementById('confirm-cp').disabled = true;
-  document.getElementById('snooze-cp').disabled = true;
-  document.getElementById('skip-cp').disabled = true;
-  document.getElementById('pause-session').disabled = true;
+  $('confirm-cp').disabled = true;
+  $('snooze-cp').disabled = true;
+  $('skip-cp').disabled = true;
+  $('pause-session').disabled = true;
   if (session){ session.endTime = Date.now(); db.saveSession(session); log('Session stopped'); session=null; }
 }
 
@@ -248,7 +248,7 @@ function updateNextDisplay(idx){
 }
 
 function renderTimeline(){
-  const ul = document.getElementById('session-timeline'); ul.innerHTML = '';
+  const ul = $('session-timeline'); ul.innerHTML = '';
   const cps = defaultPreset.checkpoints || [];
   cps.forEach((cp, i)=>{
     const li = document.createElement('li');
@@ -261,10 +261,10 @@ function renderTimeline(){
 }
 
 function updateSessionControls(){
-  const confirmBtn = document.getElementById('confirm-cp');
-  const snoozeBtn = document.getElementById('snooze-cp');
-  const skipBtn = document.getElementById('skip-cp');
-  const pauseBtn = document.getElementById('pause-session');
+  const confirmBtn = $('confirm-cp');
+  const snoozeBtn = $('snooze-cp');
+  const skipBtn = $('skip-cp');
+  const pauseBtn = $('pause-session');
   if (!sessionState){ confirmBtn.disabled = true; snoozeBtn.disabled = true; skipBtn.disabled = true; pauseBtn.disabled = true; return; }
   const idx = sessionState.index;
   const status = sessionState.statuses[idx];
@@ -320,7 +320,7 @@ function init(){
   $('enable-alerts').addEventListener('click', enableAlerts);
   $('stop').addEventListener('click', stopSession);
   $('test-alert').addEventListener('click', ()=>triggerAlert({label:'Test Alert'}));
-  document.getElementById('clear-log').addEventListener('click', ()=>{ document.getElementById('log').innerHTML=''; });
+  $('clear-log').addEventListener('click', ()=>{ $('log').innerHTML=''; });
   ensureNotifications();
 
   // initialize native notifier (if running in Capacitor)
@@ -341,14 +341,14 @@ function init(){
   })();
 
   // New preset button
-  const newBtn = document.getElementById('new-preset');
+  const newBtn = $('new-preset');
   if (newBtn) newBtn.addEventListener('click', ()=>{
     const p = { id: `preset-${Date.now()}`, name: 'New Preset', totalSeconds: 10*60, checkpoints: [] };
     presetEditor.openWith(p);
   });
 
   // Edit selected preset (opens editor with current defaultPreset)
-  const editBtn = document.getElementById('edit-preset');
+  const editBtn = $('edit-preset');
   if (editBtn) editBtn.addEventListener('click', ()=>{ presetEditor.openWith(defaultPreset); });
 
   // Load settings from localStorage
@@ -363,7 +363,7 @@ function init(){
   initAudio();
 
   // wire volume slider
-  const volSlider = document.getElementById('volume-slider');
+  const volSlider = $('volume-slider');
   if (volSlider){
     volSlider.value = Math.round((settings.volume||0.5)*100);
     volSlider.addEventListener('input', (e)=>{
