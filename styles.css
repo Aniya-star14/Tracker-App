@@ -9,6 +9,8 @@
 	font-family: Inter, system-ui, -apple-system, Roboto, 'Segoe UI', Arial;
 	color: var(--accent);
 }
+/* utility */
+.hidden{display:none}
 body{margin:0;padding:1rem;background:linear-gradient(180deg,#f7fbff,#f7f9fb);-webkit-font-smoothing:antialiased}
 .app{max-width:980px;margin:0 auto}
 .app-header{display:flex;flex-direction:column;gap:.25rem;margin-bottom:1rem}
