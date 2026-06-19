@@ -9,6 +9,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Debug: show repo files
+        run: |
+          echo "PWD: $(pwd)";
+          echo "Listing root:"; ls -la;
+          echo "Listing web files:"; ls -la . | sed -n '1,200p'
+          echo "Manifest preview:"; if [ -f manifest.json ]; then sed -n '1,120p' manifest.json; else echo 'no manifest'; fi
+      - name: Show Node
+        run: node -v && npm -v
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
