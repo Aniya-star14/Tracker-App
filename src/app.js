@@ -62,7 +62,6 @@ function startMeter(){
   if (!meterRaf) frame();
 }
 
-function stopMeter(){ if (meterRaf){ cancelAnimationFrame(meterRaf); meterRaf = null; } }
 
 function $(id){return document.getElementById(id)}
 
