@@ -79,7 +79,10 @@ export function initPresetEditor(defaultPreset, callbacks){
           const s = parseInt(secInput.value||0,10);
           working.checkpoints[idx].label = label;
           working.checkpoints[idx].duration = (m*60) + (s||0);
-          working.checkpoints[idx].channels = { audio: !!chkAudio.checked, notification: !!chkNotify.checked, vibration: !!chkVibe.checked, visual: !!chkVisual.checked };
+          // build channels; only set notification when explicitly checked so global setting can apply otherwise
+          const channels = { audio: !!chkAudio.checked, vibration: !!chkVibe.checked, visual: !!chkVisual.checked };
+          if (chkNotify.checked) channels.notification = true;
+          working.checkpoints[idx].channels = channels;
           working.checkpoints[idx].requiresConfirm = !!chkConfirm.checked;
           render();
         });
@@ -126,7 +129,7 @@ export function initPresetEditor(defaultPreset, callbacks){
     const s = parseInt(newSec.value||0,10);
     if(!label) return;
     const duration = (m*60)+(s||0);
-    working.checkpoints.push({ id: `cp-${Date.now()}`, label, duration, channels: { audio:true, notification:false, vibration:true, visual:true }, requiresConfirm: false });
+    working.checkpoints.push({ id: `cp-${Date.now()}`, label, duration, channels: { audio:true, vibration:true, visual:true }, requiresConfirm: false });
     newLabel.value=''; newMin.value=''; newSec.value=''; render();
   });
 
