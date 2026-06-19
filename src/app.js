@@ -383,9 +383,9 @@ function init(){
     btn.addEventListener('click', async ()=>{
       settings[key] = !settings[key];
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-      // if enabling notifications, request permission
-      if (key === 'notification' && settings.notification && window.Notification && Notification.permission === 'default'){
-        await Notification.requestPermission();
+      // if enabling notifications, ensure permission
+      if (key === 'notification' && settings.notification){
+        await ensureNotifications();
       }
       update();
     });
@@ -404,7 +404,7 @@ async function enableAlerts(){
     initAudio();
     if (audioCtx && audioCtx.state === 'suspended') await audioCtx.resume();
   }catch(e){ console.warn('enableAlerts audio resume failed', e); }
-  try{ if (window.Notification && Notification.permission === 'default') await Notification.requestPermission(); }catch(e){}
+  try{ await ensureNotifications(); }catch(e){}
   try{ if (navigator.vibrate) navigator.vibrate([40]); }catch(e){}
   log('Alerts enabled (audio/notification/vibration request sent)');
 }
