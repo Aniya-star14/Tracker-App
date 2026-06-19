@@ -14,7 +14,6 @@ const defaultPreset = {
   ]
 };
 
-let timers = [];
 let session = null;
 let presetEditor = null;
 let sessionState = null; // { durations, index, timerId, statuses, paused, snooze }
@@ -101,15 +100,14 @@ async function renderPresets(){
       const pick = document.createElement('button'); pick.textContent='Select';
       const del = document.createElement('button'); del.textContent='Delete';
       pick.addEventListener('click', ()=>{ setCurrentPreset(p); log(`Preset selected: ${p.name}`); });
-      del.addEventListener('click', async ()=>{ await db.init(); const tx = (await openDB()).transaction('presets','readwrite'); tx.objectStore('presets').delete(p.id); tx.oncomplete = ()=>{ renderPresets(); }; });
+      del.addEventListener('click', async ()=>{ await db.deletePreset(p.id); await renderPresets(); });
       li.appendChild(name); li.appendChild(pick); li.appendChild(del);
       ul.appendChild(li);
     });
   }catch(e){ console.warn('renderPresets failed', e); }
 }
 
-// helper to open IDB directly for deletion fallback
-function openDB(){ return new Promise((resolve,reject)=>{ const r=indexedDB.open('barber-coach-db'); r.onsuccess=()=>resolve(r.result); r.onerror=()=>reject(r.error); }); }
+// direct indexedDB access removed; use `db` helpers in src/db.js
 
 async function triggerAlert(cp){
   log(`Alert: ${cp.label}`);
@@ -160,11 +158,7 @@ async function triggerAlert(cp){
   }
 }
 
-function schedulePreset(p){
-  // Deprecated: sequential scheduling is used instead via sessionState
-}
-
-function clearTimers(){ timers.forEach(t=>clearTimeout(t)); timers=[]; }
+// Deprecated helpers removed: sequential scheduling uses `sessionState` timeouts.
 
 function log(msg){
   const ul = $('log'); const li = document.createElement('li');
@@ -204,7 +198,7 @@ function stopSession(){
   // clear sequential timer
   if (sessionState){ if (sessionState.timerId) clearTimeout(sessionState.timerId); sessionState=null; }
   try{ if (nativeNotifier && nativeNotifier.cancelAllNotifications) nativeNotifier.cancelAllNotifications(); }catch(e){}
-  clearTimers(); clearInterval(window._sessionTimer);
+  clearInterval(window._sessionTimer);
   $('start').disabled = false; $('stop').disabled = true;
   // reset control buttons
   document.getElementById('confirm-cp').disabled = true;
