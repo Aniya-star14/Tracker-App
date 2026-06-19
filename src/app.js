@@ -398,7 +398,7 @@ function init(){
 
   // Init preset editor module
   presetEditor = initPresetEditor(defaultPreset, {
-    onSave: async (p)=>{ await db.savePreset(p); await renderPresets(); setCurrentPreset(p); log('Preset saved'); },
+    onSave: async (p)=>{ await db.savePreset(p); await renderPresets(); setCurrentPreset(p); if (presetEditor && presetEditor.close) presetEditor.close(); log('Preset saved'); },
     onTest: (cp)=>{ triggerAlert(cp); }
   });
 }
