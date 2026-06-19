@@ -1,0 +1,14 @@
+{
+  "name": "barber-coach",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Barber Coach — discrete session PWA",
+  "scripts": {
+    "start": "serve -s .",
+    "build": "echo \"No build step configured (static site)\"",
+    "cap:init": "npx @capacitor/cli create"
+  },
+  "keywords": ["pwa","barber","timer","coach"],
+  "author": "",
+  "license": "MIT"
+}

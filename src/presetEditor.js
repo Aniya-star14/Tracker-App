@@ -15,7 +15,7 @@ export function initPresetEditor(defaultPreset, callbacks){
     for(const cp of (checkpoints||[])){
       const offset = cp.offset || 0;
       const dur = Math.max(0, offset - prev);
-      out.push({ id: cp.id, label: cp.label, duration: dur });
+      out.push({ id: cp.id, label: cp.label, duration: dur, channels: cp.channels || {}, requiresConfirm: !!cp.requiresConfirm });
       prev = offset;
     }
     // if there is a trailing duration (totalSeconds - last offset) and no extra cp, ignore
@@ -51,7 +51,7 @@ export function initPresetEditor(defaultPreset, callbacks){
       up.addEventListener('click', ()=>{ if(idx>0){ working.checkpoints.splice(idx-1,0,working.checkpoints.splice(idx,1)[0]); render(); } });
       down.addEventListener('click', ()=>{ if(idx<working.checkpoints.length-1){ working.checkpoints.splice(idx+1,0,working.checkpoints.splice(idx,1)[0]); render(); } });
       del.addEventListener('click', ()=>{ working.checkpoints.splice(idx,1); render(); });
-      test.addEventListener('click', ()=>{ if(callbacks && callbacks.onTest) callbacks.onTest({ label: cp.label }); });
+      test.addEventListener('click', ()=>{ if(callbacks && callbacks.onTest) callbacks.onTest(cp); });
 
       // Inline edit handler
       edit.addEventListener('click', ()=>{
@@ -60,6 +60,16 @@ export function initPresetEditor(defaultPreset, callbacks){
         const labelInput = document.createElement('input'); labelInput.value = cp.label;
         const minInput = document.createElement('input'); minInput.type = 'number'; minInput.min = 0; minInput.value = Math.floor((cp.duration||0)/60);
         const secInput = document.createElement('input'); secInput.type = 'number'; secInput.min = 0; secInput.max = 59; secInput.value = (cp.duration||0)%60;
+        const chkAudio = document.createElement('input'); chkAudio.type='checkbox'; chkAudio.checked = !!(cp.channels && cp.channels.audio);
+        const lblAudio = document.createElement('label'); lblAudio.textContent='Audio'; lblAudio.prepend(chkAudio);
+        const chkNotify = document.createElement('input'); chkNotify.type='checkbox'; chkNotify.checked = !!(cp.channels && cp.channels.notification);
+        const lblNotify = document.createElement('label'); lblNotify.textContent='Notify'; lblNotify.prepend(chkNotify);
+        const chkVibe = document.createElement('input'); chkVibe.type='checkbox'; chkVibe.checked = !!(cp.channels && cp.channels.vibration);
+        const lblVibe = document.createElement('label'); lblVibe.textContent='Vibe'; lblVibe.prepend(chkVibe);
+        const chkVisual = document.createElement('input'); chkVisual.type='checkbox'; chkVisual.checked = !!(cp.channels && cp.channels.visual);
+        const lblVisual = document.createElement('label'); lblVisual.textContent='Visual'; lblVisual.prepend(chkVisual);
+        const chkConfirm = document.createElement('input'); chkConfirm.type='checkbox'; chkConfirm.checked = !!cp.requiresConfirm;
+        const lblConfirm = document.createElement('label'); lblConfirm.textContent='Requires confirm'; lblConfirm.prepend(chkConfirm);
         const saveBtn = document.createElement('button'); saveBtn.textContent = 'Save';
         const cancelBtn = document.createElement('button'); cancelBtn.textContent = 'Cancel';
 
@@ -69,6 +79,8 @@ export function initPresetEditor(defaultPreset, callbacks){
           const s = parseInt(secInput.value||0,10);
           working.checkpoints[idx].label = label;
           working.checkpoints[idx].duration = (m*60) + (s||0);
+          working.checkpoints[idx].channels = { audio: !!chkAudio.checked, notification: !!chkNotify.checked, vibration: !!chkVibe.checked, visual: !!chkVisual.checked };
+          working.checkpoints[idx].requiresConfirm = !!chkConfirm.checked;
           render();
         });
 
@@ -79,6 +91,11 @@ export function initPresetEditor(defaultPreset, callbacks){
         form.appendChild(labelInput);
         form.appendChild(minInput);
         form.appendChild(secInput);
+        form.appendChild(lblAudio);
+        form.appendChild(lblNotify);
+        form.appendChild(lblVibe);
+        form.appendChild(lblVisual);
+        form.appendChild(lblConfirm);
         form.appendChild(saveBtn);
         form.appendChild(cancelBtn);
         li.appendChild(form);
@@ -109,7 +126,7 @@ export function initPresetEditor(defaultPreset, callbacks){
     const s = parseInt(newSec.value||0,10);
     if(!label) return;
     const duration = (m*60)+(s||0);
-    working.checkpoints.push({ id: `cp-${Date.now()}`, label, duration });
+    working.checkpoints.push({ id: `cp-${Date.now()}`, label, duration, channels: { audio:true, notification:false, vibration:true, visual:true }, requiresConfirm: false });
     newLabel.value=''; newMin.value=''; newSec.value=''; render();
   });
 
@@ -120,7 +137,7 @@ export function initPresetEditor(defaultPreset, callbacks){
     let cum = 0;
     const cpWithOffsets = working.checkpoints.map(cp=>{
       const offset = cum;
-      const out = { id: cp.id, label: cp.label, offset };
+      const out = { id: cp.id, label: cp.label, offset, channels: cp.channels || {}, requiresConfirm: !!cp.requiresConfirm };
       cum += (cp.duration||0);
       return out;
     });

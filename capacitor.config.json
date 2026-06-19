@@ -1,0 +1,6 @@
+{
+  "appId": "com.example.barbercoach",
+  "appName": "BarberCoach",
+  "webDir": ".",
+  "bundledWebRuntime": false
+}

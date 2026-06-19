@@ -5,51 +5,55 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Barber Coach — Prototype</title>
     <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b74de">
+    <link rel="icon" href="icons/icon-192.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icons/icon-192.svg">
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
     <main class="app">
-      <h1>Barber Coach (Prototype)</h1>
-      <section id="preset">
+      <header class="app-header">
+        <h1>Barber Coach</h1>
+        <p class="subtitle">Discrete session coach</p>
+      </header>
+
+      <section id="preset" class="card">
         <h2>Selected Preset</h2>
-        <div id="preset-name">Quick Cut — 20m</div>
-        <ul id="checkpoints"></ul>
+        <div id="preset-name" class="preset-title">Quick Cut — 20m</div>
+        <ul id="checkpoints" class="checkpoints list-reset"></ul>
       </section>
 
-      <section id="presets-list">
-        <h2>Presets</h2>
-        <div id="preset-actions">
-          <button id="new-preset">New Preset</button>
-          <button id="edit-preset">Edit Preset</button>
+      <section id="presets-list" class="card">
+        <div class="card-row">
+          <h2>Presets</h2>
+          <div id="preset-actions" class="actions">
+            <button id="new-preset" class="btn primary">New Preset</button>
+            <button id="edit-preset" class="btn">Edit Preset</button>
+          </div>
         </div>
-        <ul id="presets"></ul>
+        <ul id="presets" class="list-reset"></ul>
       </section>
-      <div id="preset-actions">
-        <button id="edit-preset">Edit Preset</button>
-      </div>
 
-      <section id="settings">
+      <section id="settings" class="card">
         <h2>Alert Channels</h2>
         <div class="settings-row">
-          <button class="alert-btn" data-key="audio" id="btn-audio">Headphones (sound)</button>
-          <button class="alert-btn" data-key="notification" id="btn-notify">Phone (notification)</button>
+          <button class="alert-btn" data-key="audio" id="btn-audio">Headphones</button>
+          <button class="alert-btn" data-key="notification" id="btn-notify">Notifications</button>
           <button class="alert-btn" data-key="vibration" id="btn-vibe">Vibration</button>
           <button class="alert-btn" data-key="visual" id="btn-visual">Visual</button>
         </div>
         <div class="settings-row">
-          <label style="display:flex;align-items:center;gap:.5rem">Volume
+          <label class="volume-label">Volume
             <input id="volume-slider" type="range" min="0" max="100" value="50">
           </label>
         </div>
+        <!-- Floating volume meter on the right side -->
+        <div id="volume-panel" aria-hidden="true">
+          <div id="volume-meter"><div class="level" style="height:10%"></div></div>
+        </div>
       </section>
 
-      <!-- Floating volume meter on the right side -->
-      <div id="volume-panel" aria-hidden="true">
-        <div id="volume-meter"><div class="level" style="height:10%"></div></div>
-      </div>
-      </section>
-
-      <section id="preset-editor" class="hidden">
+      <section id="preset-editor" class="card hidden">
         <h2>Edit Preset</h2>
         <label>Preset name<br><input id="editor-name" type="text"></label>
         <label>Total minutes<br><input id="editor-total-min" type="number" min="1" value="20"></label>
@@ -70,25 +74,36 @@
         </div>
       </section>
 
-      <section id="controls">
-        <button id="start">Start Session</button>
-        <button id="stop" disabled>Stop</button>
-        <button id="test-alert">Test Alert</button>
+        <section id="controls" class="card controls-row">
+          <button id="start" class="btn primary">Start Session</button>
+          <button id="stop" class="btn" disabled>Stop</button>
+          <button id="test-alert" class="btn muted">Test Alert</button>
+        </section>
+
+
+      <section id="session" class="card">
+        <div class="session-top">
+          <div id="timer">00:00</div>
+          <div id="next">Next: —</div>
+        </div>
+        <div id="session-controls" class="session-controls">
+          <button id="confirm-cp" class="btn" disabled>Confirm</button>
+          <button id="snooze-cp" class="btn" disabled>Snooze 10s</button>
+          <button id="skip-cp" class="btn" disabled>Skip</button>
+          <button id="pause-session" class="btn" disabled>Pause</button>
+        </div>
+
+        <h3>Timeline</h3>
+        <ul id="session-timeline" class="list-reset"></ul>
       </section>
 
-      <section id="session">
-        <div id="timer">00:00</div>
-        <div id="next">Next: —</div>
-      </section>
-
-      <section id="notes">
+      <section id="notes" class="card">
         <h3>Notes / Log</h3>
-        <div class="log-actions"><button id="clear-log">Clear Log</button></div>
-        <ul id="log"></ul>
+        <div class="log-actions"><button id="clear-log" class="btn muted">Clear Log</button></div>
+        <ul id="log" class="log-list"></ul>
       </section>
 
       <footer>
-        <small>Prototype: offline PWA with discrete alerts (audio, vibration, visual)</small>
       </footer>
     </main>
 

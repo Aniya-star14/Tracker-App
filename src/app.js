@@ -1,5 +1,6 @@
 import { db } from './db.js';
 import { initPresetEditor } from './presetEditor.js';
+import * as nativeNotifier from './nativeNotifier.js';
 
 const defaultPreset = {
   id: 'quick-cut',
@@ -16,6 +17,7 @@ const defaultPreset = {
 let timers = [];
 let session = null;
 let presetEditor = null;
+let sessionState = null; // { durations, index, timerId, statuses, paused, snooze }
 const SETTINGS_KEY = 'barber-coach-settings';
 let settings = {
   audio: true,
@@ -111,18 +113,25 @@ function openDB(){ return new Promise((resolve,reject)=>{ const r=indexedDB.open
 
 async function triggerAlert(cp){
   log(`Alert: ${cp.label}`);
+  // determine effective channels: per-checkpoint overrides global settings when provided
+  const ch = cp.channels || {};
+  const useAudio = (typeof ch.audio === 'boolean') ? ch.audio : settings.audio;
+  const useNotification = (typeof ch.notification === 'boolean') ? ch.notification : settings.notification;
+  const useVibration = (typeof ch.vibration === 'boolean') ? ch.vibration : settings.vibration;
+  const useVisual = (typeof ch.visual === 'boolean') ? ch.visual : settings.visual;
+
   // Visual
-  if (settings.visual){
+  if (useVisual){
     const next = $('next'); next.textContent = `Next: ${cp.label}`;
     next.classList.add('pulse');
     setTimeout(()=>next.classList.remove('pulse'),400);
   }
 
   // Vibration
-  if (settings.vibration && navigator.vibrate) navigator.vibrate([30]);
+  if (useVibration && navigator.vibrate) navigator.vibrate([30]);
 
   // Audio beep via WebAudio (headphones / sound)
-  if (settings.audio){
+  if (useAudio){
     try{
       initAudio();
       if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
@@ -140,7 +149,7 @@ async function triggerAlert(cp){
   }
 
   // Notification
-  if (settings.notification && window.Notification && Notification.permission === 'granted'){
+  if (useNotification && window.Notification && Notification.permission === 'granted'){
     new Notification(cp.label, { silent: true, badge: '/icons/icon-192.png' });
   }
 
@@ -152,13 +161,7 @@ async function triggerAlert(cp){
 }
 
 function schedulePreset(p){
-  clearTimers();
-  const start = Date.now();
-  p.checkpoints.forEach(cp=>{
-    const delay = Math.max(0, cp.offset*1000);
-    const id = setTimeout(()=>triggerAlert(cp), delay);
-    timers.push(id);
-  });
+  // Deprecated: sequential scheduling is used instead via sessionState
 }
 
 function clearTimers(){ timers.forEach(t=>clearTimeout(t)); timers=[]; }
@@ -169,10 +172,23 @@ function log(msg){
 }
 
 function startSession(){
+  // initialize session object
   session = { presetId: defaultPreset.id, startTime: Date.now(), actualCheckpoints: [] };
   db.savePreset(defaultPreset);
   db.saveSession(session);
-  schedulePreset(defaultPreset);
+  // build durations between checkpoints
+  const cps = defaultPreset.checkpoints || [];
+  const durations = [];
+  for(let i=0;i<cps.length;i++){
+    if (i===0) durations.push(cps[0].offset || 0);
+    else durations.push((cps[i].offset - cps[i-1].offset) || 0);
+  }
+  sessionState = { durations, index:0, timerId:null, statuses: cps.map(()=> 'pending'), paused:false, snooze:0 };
+  renderTimeline();
+  updateSessionControls();
+  scheduleNextCheckpoint();
+  // schedule native local notifications (for background reliability)
+  try{ if (nativeNotifier && nativeNotifier.isAvailable && nativeNotifier.isAvailable()){ nativeNotifier.scheduleSessionNotifications(session.startTime, defaultPreset.checkpoints); } }catch(e){}
   $('start').disabled = true; $('stop').disabled = false;
   log('Session started');
   // start timer UI
@@ -185,9 +201,118 @@ function startSession(){
 }
 
 function stopSession(){
+  // clear sequential timer
+  if (sessionState){ if (sessionState.timerId) clearTimeout(sessionState.timerId); sessionState=null; }
+  try{ if (nativeNotifier && nativeNotifier.cancelAllNotifications) nativeNotifier.cancelAllNotifications(); }catch(e){}
   clearTimers(); clearInterval(window._sessionTimer);
   $('start').disabled = false; $('stop').disabled = true;
+  // reset control buttons
+  document.getElementById('confirm-cp').disabled = true;
+  document.getElementById('snooze-cp').disabled = true;
+  document.getElementById('skip-cp').disabled = true;
+  document.getElementById('pause-session').disabled = true;
   if (session){ session.endTime = Date.now(); db.saveSession(session); log('Session stopped'); session=null; }
+}
+
+function scheduleNextCheckpoint(){
+  if (!sessionState) return;
+  const idx = sessionState.index;
+  if (idx >= sessionState.durations.length) { log('All checkpoints completed'); return; }
+  const delay = (sessionState.durations[idx] + (sessionState.snooze || 0));
+  // clear any existing
+  if (sessionState.timerId) clearTimeout(sessionState.timerId);
+  sessionState.snooze = 0;
+  sessionState.timerId = setTimeout(()=>onCheckpoint(idx), delay*1000);
+  updateNextDisplay(idx);
+}
+
+function onCheckpoint(idx){
+  if (!sessionState) return;
+  sessionState.statuses[idx] = 'alerted';
+  sessionState.timerId = null;
+  renderTimeline();
+  const cp = defaultPreset.checkpoints[idx];
+  triggerAlert(cp);
+  // enable confirm/snooze/skip
+  updateSessionControls();
+  // if no confirm required, auto-complete and move to next
+  const requiresConfirm = cp.requiresConfirm || false;
+  if (!requiresConfirm){
+    sessionState.statuses[idx] = 'completed';
+    sessionState.index = idx + 1;
+    renderTimeline();
+    // schedule next after tiny gap
+    sessionState.timerId = setTimeout(()=>{ scheduleNextCheckpoint(); }, 200);
+  }
+}
+
+function updateNextDisplay(idx){
+  const nextEl = $('next');
+  const cp = defaultPreset.checkpoints[idx];
+  if (cp) nextEl.textContent = `Next: ${cp.label} (${formatTime(sessionState.durations[idx])})`;
+  else nextEl.textContent = 'Next: —';
+}
+
+function renderTimeline(){
+  const ul = document.getElementById('session-timeline'); ul.innerHTML = '';
+  const cps = defaultPreset.checkpoints || [];
+  cps.forEach((cp, i)=>{
+    const li = document.createElement('li');
+    const label = document.createElement('div'); label.textContent = `${formatTime(cp.offset)} — ${cp.label}`;
+    const status = document.createElement('div'); status.className = 'cp-status ' + (sessionState? sessionState.statuses[i] : 'pending');
+    status.textContent = sessionState? sessionState.statuses[i] : 'pending';
+    li.appendChild(label); li.appendChild(status);
+    ul.appendChild(li);
+  });
+}
+
+function updateSessionControls(){
+  const confirmBtn = document.getElementById('confirm-cp');
+  const snoozeBtn = document.getElementById('snooze-cp');
+  const skipBtn = document.getElementById('skip-cp');
+  const pauseBtn = document.getElementById('pause-session');
+  if (!sessionState){ confirmBtn.disabled = true; snoozeBtn.disabled = true; skipBtn.disabled = true; pauseBtn.disabled = true; return; }
+  const idx = sessionState.index;
+  const status = sessionState.statuses[idx];
+  // enable controls if current checkpoint is alerted
+  const active = (status === 'alerted');
+  confirmBtn.disabled = !active;
+  snoozeBtn.disabled = !active;
+  skipBtn.disabled = !active;
+  pauseBtn.disabled = false;
+  // attach handlers
+  confirmBtn.onclick = ()=>{
+    // mark confirmed and advance
+    const cp = defaultPreset.checkpoints[idx];
+    sessionState.statuses[idx] = 'confirmed'; renderTimeline();
+    // cancel native notification for this checkpoint
+    try{ if (nativeNotifier && nativeNotifier.cancelNotificationForCheckpoint) nativeNotifier.cancelNotificationForCheckpoint(cp); }catch(e){}
+    sessionState.index = idx + 1; db.saveSession(session);
+    scheduleNextCheckpoint();
+  };
+  snoozeBtn.onclick = ()=>{
+    // add 10s snooze and reschedule next checkpoint
+    const cp = defaultPreset.checkpoints[idx];
+    sessionState.statuses[idx] = 'snoozed'; renderTimeline();
+    sessionState.snooze = 10; // seconds
+    try{ if (nativeNotifier && nativeNotifier.snoozeNotification) nativeNotifier.snoozeNotification(cp, 10); }catch(e){}
+    scheduleNextCheckpoint();
+  };
+  skipBtn.onclick = ()=>{
+    const cp = defaultPreset.checkpoints[idx];
+    sessionState.statuses[idx] = 'skipped'; renderTimeline();
+    try{ if (nativeNotifier && nativeNotifier.cancelNotificationForCheckpoint) nativeNotifier.cancelNotificationForCheckpoint(cp); }catch(e){}
+    sessionState.index = idx + 1; db.saveSession(session);
+    scheduleNextCheckpoint();
+  };
+  pauseBtn.onclick = ()=>{
+    if (!sessionState.paused){
+      // pause
+      sessionState.paused = true; if (sessionState.timerId) clearTimeout(sessionState.timerId); sessionState.timerId = null; pauseBtn.textContent = 'Resume'; log('Session paused');
+    } else {
+      sessionState.paused = false; pauseBtn.textContent = 'Pause'; log('Session resumed'); scheduleNextCheckpoint();
+    }
+  };
 }
 
 async function ensureNotifications(){
@@ -202,6 +327,9 @@ function init(){
   $('test-alert').addEventListener('click', ()=>triggerAlert({label:'Test Alert'}));
   document.getElementById('clear-log').addEventListener('click', ()=>{ document.getElementById('log').innerHTML=''; });
   ensureNotifications();
+
+  // initialize native notifier (if running in Capacitor)
+  try{ nativeNotifier.initNative().then(av=>{ if (av) console.log('Native notifications available'); }); }catch(e){}
 
   if ('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(()=>{});
