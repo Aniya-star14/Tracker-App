@@ -228,6 +228,9 @@ function scheduleNextCheckpoint(){
   // clear any existing
   if (sessionState.timerId) clearTimeout(sessionState.timerId);
   sessionState.snooze = 0;
+  // diagnostic log: record when this checkpoint is scheduled to fire
+  const scheduledAt = Date.now() + (delay*1000);
+  log(`Scheduling checkpoint ${idx} (${defaultPreset.checkpoints[idx]?.label || '—'}) in ${delay}s (at ${new Date(scheduledAt).toLocaleTimeString()})`);
   sessionState.timerId = setTimeout(()=>onCheckpoint(idx), delay*1000);
   updateNextDisplay(idx);
 }
@@ -235,6 +238,7 @@ function scheduleNextCheckpoint(){
 function onCheckpoint(idx){
   if (!sessionState) return;
   sessionState.statuses[idx] = 'alerted';
+  log(`onCheckpoint fired for ${idx} (${defaultPreset.checkpoints[idx]?.label || '—'}) at ${new Date().toLocaleTimeString()}`);
   sessionState.timerId = null;
   renderTimeline();
   const cp = defaultPreset.checkpoints[idx];
