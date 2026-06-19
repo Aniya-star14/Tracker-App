@@ -323,6 +323,7 @@ async function ensureNotifications(){
 function init(){
   renderPreset(defaultPreset);
   $('start').addEventListener('click', startSession);
+  $('enable-alerts').addEventListener('click', enableAlerts);
   $('stop').addEventListener('click', stopSession);
   $('test-alert').addEventListener('click', ()=>triggerAlert({label:'Test Alert'}));
   document.getElementById('clear-log').addEventListener('click', ()=>{ document.getElementById('log').innerHTML=''; });
@@ -398,9 +399,20 @@ function init(){
 
   // Init preset editor module
   presetEditor = initPresetEditor(defaultPreset, {
-    onSave: async (p)=>{ await db.savePreset(p); await renderPresets(); setCurrentPreset(p); if (presetEditor && presetEditor.close) presetEditor.close(); log('Preset saved'); },
+    onSave: async (p)=>{ await db.savePreset(p); await renderPresets(); setCurrentPreset(p); log('Preset saved'); },
     onTest: (cp)=>{ triggerAlert(cp); }
   });
+}
+
+async function enableAlerts(){
+  try{
+    // resume audio context with user gesture
+    initAudio();
+    if (audioCtx && audioCtx.state === 'suspended') await audioCtx.resume();
+  }catch(e){ console.warn('enableAlerts audio resume failed', e); }
+  try{ if (window.Notification && Notification.permission === 'default') await Notification.requestPermission(); }catch(e){}
+  try{ if (navigator.vibrate) navigator.vibrate([40]); }catch(e){}
+  log('Alerts enabled (audio/notification/vibration request sent)');
 }
 
 window.addEventListener('load', init);
