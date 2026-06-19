@@ -148,14 +148,13 @@ export function initPresetEditor(defaultPreset, callbacks){
     if(callbacks && callbacks.onSave) callbacks.onSave(presetOut);
   });
 
-  // expose methods to programmatically open/close the editor with a preset
+  // expose a method to programmatically open the editor with a preset
   return {
     openWith(p){ working = {
       id: p.id,
       name: p.name,
       totalSeconds: p.totalSeconds,
       checkpoints: offsetsToDurations(p.checkpoints, p.totalSeconds)
-    }; editor.classList.remove('hidden'); render(); },
-    close(){ editor.classList.add('hidden'); }
+    }; editor.classList.remove('hidden'); render(); }
   };
 }
